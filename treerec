@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# This comes from the Hackerrank challenge https://www.hackerrank.com/challenges/fractal-trees-all/problem
+# This challenge involves the construction of trees, in the form of ASCII Art.
+# The script will prompt you for input
+# Provide the depth of the tree you would like to draw from 0 - 5
+# Current limitation: maximum depth is 5
+echo "Let's draw a tree with ASCII Art. How many layers would you like? No more than 5 please."
 plain=""
 for i in $(seq 1 100)
 do
@@ -103,7 +109,10 @@ if [[ depth -eq 0 ]]
       do
         echo $plain
       done
-else
+elif [[ depth -gt 0 && depth -lt 6 ]]
+  then
     base=$(sed 's/_/1/50' <<< $plain)
     treerec 2 1 1 15 $base $base 16
+else
+  echo "Please provide a number from 0 to 5"
 fi
