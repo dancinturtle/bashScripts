@@ -1,0 +1,109 @@
+#!/bin/bash
+
+plain=""
+for i in $(seq 1 100)
+do
+  plain="${plain}_"
+done
+
+read depth
+
+treerec () {
+	# first argument, the row of our answer (2-100)
+	# second argument, the current depth (cannot be greater than 5)
+	# third argument, 1 means stem of y, 2 means branches of y
+	# fourth argument, how many left for this stem or branch
+	# fifth argument, the string so far
+	# sixth argument, the previous string
+	# seventh argument, final height for this segment
+  # base case, we have all our rows completed
+  if [[ $1 -gt 63 ]] 
+    then
+      echo -e $5
+  # if we made our tree, we need to fill in the rest with plain lines
+  elif [[ $2 -gt $depth ]]
+     then
+       newrow=$(($1+1))
+       newstring="${plain}\n${5}"
+       treerec $newrow $2 $3 $4 $newstring $plain
+  # if we're at the end of this stem or branch, then we need to move on to the branches
+  elif [[ $4 -eq 0 && $3 -eq 1 ]]
+    then  
+      treerec $1 $2 2 $7 $5 $6 $7
+  # if we're done with the branches, then we need to move on to the next depth
+  elif [[ $4 -eq 0 && $3 -eq 2 ]]
+    then
+      newdepth=$(($2+1))
+      newheight=$(($7/2))
+      treerec $1 $newdepth 1 $newheight $5 $6 $newheight
+  # if we're making stems, then we just copy the previous
+  elif [[ $3 -eq 1 ]]
+      then
+        newstring="${6}\n${5}"
+	newrow=$(($1+1))
+	heightleft=$(($4-1))
+	treerec $newrow $2 $3 $heightleft $newstring $6 $7
+
+  # if we're making branches, then we double the 1s and split them if we're starting a new branch
+  elif [[ $3 -eq 2 && $4 -eq $7 ]]
+      then
+	oldprev=$6
+	newprev=""
+	pos=1
+	while [[ $pos -lt 100 ]]; do
+	  if [[ ${oldprev:$pos:1} == "1" ]]
+            then
+	      newprev="${newprev}1_1"
+	      pos=$(($pos+3))
+	  else
+              newprev="${newprev}_"
+	      pos=$(($pos+1))
+	  fi
+	done
+	newprev="${newprev}_"
+	newrow=$(($1+1))
+	newheight=$(($4-1))
+        newstring="${newprev}\n${5}"
+	treerec $newrow $2 $3 $newheight $newstring $newprev $7
+ 
+ # if we're growing branches, then we alternate between sliding 1s left and right
+   elif [[ $3 -eq 2 && $4 -ne $7 ]]
+      then
+	oldprev=$6
+        newprev=""
+	pos=1
+	slide=1
+	while [[ $pos -lt 100 ]]; do
+	  if [[ ${oldprev:$pos:1} == "1" && $slide -eq 1 ]]
+	    then
+	      slide=2
+	      newprev="${newprev}1_"
+	      pos=$(($pos+1))
+	  elif [[ ${oldprev:$pos:1} == "1" && $slide -eq 2 ]]
+             then
+	       slide=1
+	       newprev="${newprev}_1"
+	       pos=$(($pos+3))
+	  else
+             newprev="${newprev}_"
+	     pos=$(($pos+1))
+	  fi
+	done
+	newprev="${newprev}_"
+	newrow=$(($1+1))
+	newheight=$(($4-1))
+	newstring="${newprev}\n${5}"
+	treerec $newrow $2 $3 $newheight $newstring $newprev $7
+  fi
+}
+
+if [[ depth -eq 0 ]]
+  then
+    for row in $(seq 1 63)
+      do
+        echo $plain
+      done
+else
+    base=$(sed 's/_/1/50' <<< $plain)
+    treerec 2 1 1 15 $base $base 16
+fi
